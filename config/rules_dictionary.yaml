@@ -1,0 +1,71 @@
+validations:
+  - rule_id: "R001"
+    template_name: "CustomerData"
+    column_name: "customer_id"
+    rule_type: "Mandatory"
+  - rule_id: "R002"
+    template_name: "CustomerData"
+    column_name: "age"
+    rule_type: "Range"
+  - rule_id: "R003"
+    template_name: "CustomerData"
+    column_name: "email"
+    rule_type: "Pattern"
+
+template:
+  - feed_name: "CustomerData"
+    column_name: "customer_id"
+    definition: "Unique identifier for customer"
+    type_name: "string"
+    mandatory: true
+    unique: true
+  - feed_name: "CustomerData"
+    column_name: "age"
+    definition: "Customer age"
+    type_name: "integer"
+    range:
+      bottom: 0
+      top: 120
+      scope: "inclusive"
+    mandatory: true
+
+enumerations:
+  country_codes:
+    - "USA"
+    - "UK"
+    - "IND"
+    - "CHN"
+    - "LKA"
+
+pattern:
+  email_pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+  phone_pattern: "^\\+?[1-9][0-9]{7,14}$"
+
+business_rules:
+  - rule_id: "BR001"
+    description: "Sum validation for specific countries"
+    condition: "country in ('IND', 'CHN', 'LKA')"
+    validation: "column1 + column2 >= column3"
+    group_by: ["sdsid", "extract_month"]
+
+reconciliation:
+  - rec_id: "REC001"
+    source_feed: "source_table"
+    target_feed: "target_table"
+    dimensions: "column1;column2;column3"
+    dimension_values: "value1;(value2,value3);value4"
+    measure_field: "amount"
+
+reporting:
+  schedule: "daily"
+  format: 
+    - "html"
+    - "pdf"
+    - "excel"
+  recipients: ["team@company.com"]
+  branding:
+    logo_path: "static/images/logo.png"
+    company_name: "Data Quality Framework"
+    color_scheme:
+      primary: "#007bff"
+      secondary: "#6c757d"
