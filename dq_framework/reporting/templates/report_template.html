@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Quality Validation Report</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .status-badge.success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .metric-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .chart-container {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="p-8">
+    <!-- Header -->
+    <header class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Data Quality Validation Report</h1>
+                <p class="text-gray-500 mt-2">Generated on {{ timestamp }}</p>
+            </div>
+            {% if branding.logo_path %}
+            <img src="{{ branding.logo_path }}" alt="{{ branding.company_name }}" class="h-12">
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Executive Summary -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Executive Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="metric-card">
+                <div class="metric-value">{{ summary.total_validations }}</div>
+                <div class="metric-label">Total Validations</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-green-600">{{ summary.passed_validations }}</div>
+                <div class="metric-label">Passed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-red-600">{{ summary.failed_validations }}</div>
+                <div class="metric-label">Failed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value text-blue-600">{{ "%.2f"|format(summary.success_rate) }}%</div>
+                <div class="metric-label">Success Rate</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visualizations -->
+    <section class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Validation Results Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="chart-container">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Status Distribution</h3>
+                {{ visualizations.status_pie | safe }}
+            </div>
+            <div class="chart-container">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Validation Types</h3>
+                {{ visualizations.type_bar | safe }}
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Results -->
+    <section>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Detailed Results</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Validation Type</th>
+                        <th>Status</th>
+                        <th>Timestamp</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in detailed_results %}
+                    <tr>
+                        <td class="font-medium">{{ result.validation_type }}</td>
+                        <td>
+                            <span class="status-badge {{ 'success' if result.status == 'completed' else 'error' }}">
+                                {{ result.status }}
+                            </span>
+                        </td>
+                        <td>{{ result.timestamp }}</td>
+                        <td>
+                            {% if result.error_samples %}
+                            <details>
+                                <summary class="cursor-pointer text-blue-600">View Details</summary>
+                                <div class="mt-2">
+                                    <h4 class="font-medium mb-2">Error Samples:</h4>
+                                    <ul class="list-disc pl-5">
+                                    {% for error in result.error_samples %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-center text-gray-500 text-sm">
+        <p>Generated by Data Quality Validation Framework</p>
+        {% if branding.company_name %}
+        <p class="mt-1">{{ branding.company_name }}</p>
+        {% endif %}
+    </footer>
+</body>
+</html>
